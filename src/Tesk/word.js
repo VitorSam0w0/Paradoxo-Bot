@@ -5,15 +5,16 @@ client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
   const channelId = process.env.CHANNEL_ID;
+  const channel = await client.channels.fetch(channelId);
 
-  setInterval(async () => {
+  if (!channel) {
+    console.error('Canal não encontrado. Verifique o ID no .env');
+    return;
+  }
+
+  // Função para enviar palavra + imagem
+  async function sendWordImage() {
     try {
-      const channel = await client.channels.fetch(channelId);
-      if (!channel) {
-        console.error('Canal não encontrado. Verifique o ID no .env');
-        return;
-      }
-
       const wordResponse = await fetch('https://random-word-api.herokuapp.com/word');
       const wordData = await wordResponse.json();
       const randomWord = wordData[0];
@@ -28,7 +29,13 @@ client.once('ready', async () => {
       console.log(`Palavra ${randomWord} enviada para o canal ${channel.name}`);
 
     } catch (error) {
-      console.error('Erro ao buscar o canal ou enviar mensagem:', error);
+      console.error('Erro ao enviar a palavra e imagem:', error);
     }
-  }, 30000); // 1 hora = 3600000 milissegundos
+  }
+
+  // Envia imediatamente ao conectar
+  await sendWordImage();
+
+  // Depois envia a cada 30 minutos (1800000 ms)
+  setInterval(sendWordImage, 1800000);
 });
