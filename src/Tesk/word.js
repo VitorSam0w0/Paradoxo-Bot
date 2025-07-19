@@ -1,5 +1,4 @@
 const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
-require('dotenv').config();
 
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -12,7 +11,6 @@ client.once('ready', async () => {
     return;
   }
 
-  // Função para enviar palavra + imagem
   async function sendWordImage() {
     try {
       const wordResponse = await fetch('https://random-word-api.herokuapp.com/word');
@@ -33,9 +31,9 @@ client.once('ready', async () => {
     }
   }
 
-  // Envia imediatamente ao conectar
+  // Envia imediatamente
   await sendWordImage();
 
-  // Depois envia a cada 30 minutos (1800000 ms)
+  // Envia a cada 30 minutos (1800000 ms)
   setInterval(sendWordImage, 1800000);
 });
