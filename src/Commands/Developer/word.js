@@ -1,16 +1,8 @@
-const { SlashCommandBuilder } = require('discord.js');
+async execute(interaction) {
+  try {
+    // Se for tarefa lenta, descomente a linha abaixo
+    // await interaction.deferReply();
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('word')
-    .setDescription('Envia a palavra em inglês com imagem')
-    .addStringOption(option =>
-      option.setName('palavra')
-        .setDescription('A palavra em inglês')
-        .setRequired(true)
-    ),
-
-  async execute(interaction) {
     const word = interaction.options.getString('palavra');
     const imageUrl = `https://source.unsplash.com/600x400/?${word}`;
 
@@ -18,5 +10,8 @@ module.exports = {
       content: `**Word:** ${word}`,
       files: [imageUrl]
     });
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: 'Ocorreu um erro.', ephemeral: true });
   }
-};
+}
