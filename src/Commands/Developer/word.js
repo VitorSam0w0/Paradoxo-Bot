@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,9 +14,13 @@ module.exports = {
     const word = interaction.options.getString('palavra');
     const imageUrl = `https://source.unsplash.com/600x400/?${word}`;
 
+    const embed = new EmbedBuilder()
+      .setTitle(`Word: ${word}`)
+      .setImage(imageUrl)
+      .setColor(0x00AE86);
+
     await interaction.reply({
-      content: `**Word:** ${word}`,
-      files: [imageUrl]
+      embeds: [embed]
     });
   }
 };
