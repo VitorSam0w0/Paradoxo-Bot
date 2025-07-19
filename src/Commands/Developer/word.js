@@ -12,12 +12,12 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply(); // garante tempo extra
+    await interaction.deferReply();
 
     try {
       const inputWord = interaction.options.getString('palavra');
 
-      const translateResponse = await fetch('https://libretranslate.de/translate', {
+      const translateResponse = await fetch('https://translate.argosopentech.com/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
