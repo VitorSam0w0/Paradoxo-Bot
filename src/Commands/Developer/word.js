@@ -12,33 +12,42 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const inputWord = interaction.options.getString('palavra');
+    await interaction.deferReply(); // garante tempo extra
 
-    // Traduz a palavra para inglês usando LibreTranslate
-    const translateResponse = await fetch('https://libretranslate.de/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        q: inputWord,
-        source: 'pt',
-        target: 'en',
-        format: 'text'
-      })
-    });
+    try {
+      const inputWord = interaction.options.getString('palavra');
 
-    const translateData = await translateResponse.json();
-    const translatedWord = translateData.translatedText;
+      const translateResponse = await fetch('https://libretranslate.de/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q: inputWord,
+          source: 'pt',
+          target: 'en',
+          format: 'text'
+        })
+      });
 
-    const imageUrl = `https://source.unsplash.com/600x400/?${translatedWord}`;
+      if (!translateResponse.ok) throw new Error('Falha na tradução');
 
-    const embed = new EmbedBuilder()
-      .setTitle(`Word: ${translatedWord}`)
-      .setImage(imageUrl)
-      .setColor(0x00AE86)
-      .setFooter({ text: `Tradução de: ${inputWord}` });
+      const translateData = await translateResponse.json();
+      const translatedWord = translateData.translatedText;
 
-    await interaction.reply({
-      embeds: [embed]
-    });
+      const imageUrl = `https://source.unsplash.com/600x400/?${translatedWord}`;
+
+      const embed = new EmbedBuilder()
+        .setTitle(`Word: ${translatedWord}`)
+        .setImage(imageUrl)
+        .setColor(0x00AE86)
+        .setFooter({ text: `Tradução de: ${inputWord}` });
+
+      await interaction.editReply({
+        embeds: [embed]
+      });
+
+    } catch (err) {
+      console.error('Erro no comando /word:', err);
+      await interaction.editReply({ content: '❌ Ocorreu um erro ao traduzir ou buscar a imagem. Tente novamente!' });
+    }
   }
 };
