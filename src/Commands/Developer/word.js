@@ -12,7 +12,6 @@ module.exports = {
 
   async execute(interaction) {
     const word = interaction.options.getString('palavra');
-
     const imageUrl = `https://source.unsplash.com/600x400/?${word}`;
 
     await interaction.reply({
