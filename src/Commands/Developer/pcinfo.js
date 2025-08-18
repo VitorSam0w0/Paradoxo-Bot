@@ -1,9 +1,12 @@
+const { SlashCommandBuilder } = require("discord.js");
 const os = require("os");
 
 module.exports = {
-  name: "pcinfo",
-  description: "Mostra as informações do servidor/máquina",
-  run: async (client, message, args) => {
+  data: new SlashCommandBuilder()
+    .setName("pcinfo")
+    .setDescription("Mostra informações do servidor/máquina"),
+
+  async execute(interaction) {
     const info = {
       Sistema: os.type(),
       Versão: os.release(),
@@ -19,6 +22,9 @@ module.exports = {
       .map(([k, v]) => `**${k}:** ${v}`)
       .join("\n");
 
-    message.reply("📊 **Configurações da máquina:**\n" + result);
+    await interaction.reply({
+      content: "📊 **Configurações da máquina:**\n" + result,
+      ephemeral: false, // se quiser que só tu veja, troca pra true
+    });
   },
 };
