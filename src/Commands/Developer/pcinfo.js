@@ -22,7 +22,6 @@ module.exports = {
     const info = `
 **💻 CPU:** ${cpu.manufacturer} ${cpu.brand} (${cpu.cores} núcleos)
 **🖥 RAM Total:** ${(mem.total / 1024 ** 3).toFixed(2)} GB
-**🖥 RAM Usada:** ${((mem.total - mem.available) / 1024 ** 3).toFixed(2)} GB
 **🖥 RAM Livre:** ${(mem.available / 1024 ** 3).toFixed(2)} GB
 **🎮 GPU:** ${gpu.controllers.map(g => `${g.model} (${g.vram} MB VRAM)`).join(", ")}
 **🛠 Placa-mãe:** ${baseboard.manufacturer} ${baseboard.model}
