@@ -22,9 +22,6 @@ module.exports = {
       .map(([k, v]) => `**${k}:** ${v}`)
       .join("\n");
 
-    await interaction.reply({
-      content: "📊 **Configurações da máquina:**\n" + result,
-      ephemeral: false, // se quiser que só tu veja, troca pra true
-    });
+    await interaction.reply("📊 **Configurações da máquina:**\n" + result);
   },
 };
