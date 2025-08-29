@@ -2,10 +2,12 @@ require("dotenv").config();
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require("discord.js");
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
-// Letra da música "Yesterday" (The Beatles)
+// ==========================
+// 🎵 Letra da música "Yesterday"
+// ==========================
 const yesterdayLyrics = [
   { line: "Yesterday, all my troubles seemed so far away", words: ["yesterday", "troubles", "seemed", "far", "away"], translations: { yesterday: "ontem", troubles: "problemas", seemed: "pareciam", far: "longe", away: "distante" } },
   { line: "Now it looks as though they're here to stay", words: ["now", "looks", "though", "stay"], translations: { now: "agora", looks: "parece", though: "embora / como se", stay: "ficar" } },
@@ -23,24 +25,22 @@ const yesterdayLyrics = [
 let progress = {}; // progresso por usuário
 let currentQuestion = {}; // questão atual por usuário
 
-// =====================================
+// ==========================
 // 🔹 Registrar comando /yesterday
-// =====================================
+// ==========================
 const commands = [
   new SlashCommandBuilder()
     .setName("yesterday")
     .setDescription("Pratique inglês com a música Yesterday (The Beatles)")
 ].map(cmd => cmd.toJSON());
 
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_ID);
+const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
 (async () => {
   try {
-    console.log("🚀 Registrando comando /yesterday...");
-    // Se quiser global, usa Routes.applicationCommands
-    // Se quiser só no servidor, usa Routes.applicationGuildCommands
+    console.log("🚀 Registrando comando /yesterday no servidor...");
     await rest.put(
-      Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+      Routes.applicationGuildCommands(process.env.BOT_ID, process.env.GUILD_ID),
       { body: commands }
     );
     console.log("✅ Comando registrado com sucesso!");
@@ -49,9 +49,9 @@ const rest = new REST({ version: "10" }).setToken(process.env.BOT_ID);
   }
 })();
 
-// =====================================
+// ==========================
 // 🔹 Interações
-// =====================================
+// ==========================
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -74,9 +74,9 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-// =====================================
+// ==========================
 // 🔹 Mensagens de resposta
-// =====================================
+// ==========================
 client.on("messageCreate", (message) => {
   if (message.author.bot) return;
 
@@ -106,4 +106,4 @@ client.once("ready", () => {
   console.log(`✅ Bot logado como ${client.user.tag}`);
 });
 
-client.login(process.env.BOT_ID);
+client.login(process.env.TOKEN);
