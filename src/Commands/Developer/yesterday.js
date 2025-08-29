@@ -1,3 +1,4 @@
+// /yesterday.js
 module.exports = {
   data: {
     name: "yesterday",
@@ -6,8 +7,6 @@ module.exports = {
     dm_permissions: "0",
   },
   async execute(interaction, client) {
-    const channel = interaction.channel; // usa o mesmo canal do comando
-
     // ======================
     // LETRA DA MÚSICA
     // ======================
@@ -25,17 +24,7 @@ module.exports = {
       { line: "Oh, I believe in yesterday", words: ["believe", "yesterday"], translations: { believe: "acreditar", yesterday: "ontem" } }
     ];
 
-    // ======================
-    // FUNÇÃO DE NORMALIZAÇÃO
-    // ======================
-    function normalize(str) {
-      return str
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w\s]/gi, "")
-        .trim();
-    }
+    const userId = interaction.user.id;
 
     // ======================
     // INICIALIZA PROGRESSO
@@ -43,63 +32,23 @@ module.exports = {
     if (!client.progress) client.progress = {};
     if (!client.currentQuestion) client.currentQuestion = {};
 
-    const userId = interaction.user.id;
     if (!client.progress[userId]) client.progress[userId] = 0;
 
     const index = client.progress[userId];
     const verse = yesterdayLyrics[index];
 
-    // Palavra aleatória
+    // Palavra aleatória para esconder
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
     const maskedLine = verse.line.replace(new RegExp("\\b" + hiddenWord + "\\b", "i"), "____");
 
+    // Guarda a pergunta atual
     client.currentQuestion[userId] = {
+      music: "yesterday",
       hiddenWord,
       translation: verse.translations[hiddenWord],
       index
     };
 
-    // ======================
-    // ENVIA A MENSAGEM DO COMANDO
-    // ======================
-    await interaction.deferReply({ ephemeral: true });
-    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda aqui mesmo)`);
-
-    // ======================
-    // COLETOR DE MENSAGENS
-    // ======================
-    const collector = channel.createMessageCollector({ filter: msg => msg.author.id === userId, time: 60000 });
-
-    collector.on("collect", async (msg) => {
-      const question = client.currentQuestion[userId];
-      if (!question) return collector.stop("no_question");
-
-      const userAnswer = normalize(msg.content);
-      const hiddenWordNormalized = normalize(question.hiddenWord);
-
-      if (userAnswer === hiddenWordNormalized) {
-        await msg.reply(`✅ Correct! The word **${question.hiddenWord}** means **${question.translation}**`);
-        collector.stop("correct");
-      } else {
-        await msg.reply("❌ Not quite right, try again!");
-      }
-    });
-
-    collector.on("end", async (_, reason) => {
-      if (reason === "correct") {
-        const question = client.currentQuestion[userId];
-        if (question) {
-          client.progress[userId] = question.index + 1;
-          if (client.progress[userId] >= yesterdayLyrics.length) {
-            await channel.send(`🎶 ${interaction.user} **You've completed the song!** Starting again from the beginning.`);
-            client.progress[userId] = 0;
-          }
-          client.currentQuestion[userId] = null;
-        }
-      } else if (reason === "time") {
-        interaction.followUp({ content: "⏰ Time's up! Use `/yesterday` to try again.", ephemeral: true });
-        client.currentQuestion[userId] = null;
-      }
-    });
+    await interaction.reply(`🎶 ${maskedLine}\nUse /responder para enviar sua resposta.`);
   },
 };
