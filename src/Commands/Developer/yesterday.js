@@ -30,6 +30,7 @@ module.exports = {
     const index = client.progress[userId];
     const verse = yesterdayLyrics[index];
 
+    // palavra aleatória
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
     const maskedLine = verse.line.replace(new RegExp(hiddenWord, "i"), "____");
 
@@ -39,8 +40,46 @@ module.exports = {
       index
     };
 
-    // ⚡ evita "The application did not respond"
+    // evita "The application did not respond"
     await interaction.deferReply({ ephemeral: true });
     await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word!`);
+
+    // Listener de respostas no chat
+    const filter = (msg) => msg.author.id === userId;
+    const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
+
+    collector.on("collect", async (msg) => {
+      const question = client.currentQuestion[userId];
+      if (!question) return;
+
+      const regex = new RegExp(`\\b${question.hiddenWord}\\b`, "i");
+      if (regex.test(msg.content)) {
+        // mostra tradução primeiro
+        await msg.reply(`✅ Correct! The word **${question.hiddenWord}** means **${question.translation}**`);
+
+        // pequena pausa antes de continuar
+        setTimeout(async () => {
+          // avança para próximo verso
+          client.progress[userId] = question.index + 1;
+
+          if (client.progress[userId] >= yesterdayLyrics.length) {
+            await msg.channel.send("🔄 You've reached the end of the song. Starting again...");
+            client.progress[userId] = 0;
+          }
+
+          client.currentQuestion[userId] = null;
+          collector.stop(); // para o coletor para o usuário responder o próximo verso
+        }, 1500); // 1,5s de pausa para o usuário ver a tradução
+      } else {
+        msg.reply("❌ Not quite right, try again!");
+      }
+    });
+
+    collector.on("end", (_, reason) => {
+      if (reason === "time") {
+        interaction.followUp({ content: "⏰ Time's up! Use /yesterday to try again.", ephemeral: true });
+        client.currentQuestion[userId] = null;
+      }
+    });
   },
 };
