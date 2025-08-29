@@ -1,4 +1,3 @@
-// /yesterday.js
 module.exports = {
   data: {
     name: "yesterday",
@@ -7,9 +6,8 @@ module.exports = {
     dm_permissions: "0",
   },
   async execute(interaction, client) {
-    // ======================
-    // LETRA DA MÚSICA
-    // ======================
+    const userId = interaction.user.id;
+
     const yesterdayLyrics = [
       { line: "Yesterday, all my troubles seemed so far away", words: ["yesterday", "troubles", "seemed", "far", "away"], translations: { yesterday: "ontem", troubles: "problemas", seemed: "pareciam", far: "longe", away: "distante" } },
       { line: "Now it looks as though they're here to stay", words: ["now", "looks", "though", "stay"], translations: { now: "agora", looks: "parece", though: "embora / como se", stay: "ficar" } },
@@ -24,11 +22,6 @@ module.exports = {
       { line: "Oh, I believe in yesterday", words: ["believe", "yesterday"], translations: { believe: "acreditar", yesterday: "ontem" } }
     ];
 
-    const userId = interaction.user.id;
-
-    // ======================
-    // INICIALIZA PROGRESSO
-    // ======================
     if (!client.progress) client.progress = {};
     if (!client.currentQuestion) client.currentQuestion = {};
 
@@ -37,11 +30,9 @@ module.exports = {
     const index = client.progress[userId];
     const verse = yesterdayLyrics[index];
 
-    // Palavra aleatória para esconder
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
     const maskedLine = verse.line.replace(new RegExp("\\b" + hiddenWord + "\\b", "i"), "____");
 
-    // Guarda a pergunta atual
     client.currentQuestion[userId] = {
       music: "yesterday",
       hiddenWord,
@@ -49,6 +40,9 @@ module.exports = {
       index
     };
 
-    await interaction.reply(`🎶 ${maskedLine}\nUse /responder para enviar sua resposta.`);
+    await interaction.reply({
+      content: `🎶 ${maskedLine}\nUse /responder para enviar sua resposta.`,
+      ephemeral: false
+    });
   },
 };
