@@ -6,6 +6,16 @@ module.exports = {
     dm_permissions: "0",
   },
   async execute(interaction, client) {
+    // ======================
+    // CONFIGURAÇÃO DO CANAL
+    // ======================
+    const practiceChannelId = "ID_DO_CANAL_AQUI"; // Coloque o ID do canal onde o bot vai coletar mensagens
+    const channel = client.channels.cache.get(practiceChannelId);
+    if (!channel) return interaction.reply({ content: "Canal de prática não encontrado!", ephemeral: true });
+
+    // ======================
+    // LETRA DA MÚSICA
+    // ======================
     const yesterdayLyrics = [
       { line: "Yesterday, all my troubles seemed so far away", words: ["yesterday", "troubles", "seemed", "far", "away"], translations: { yesterday: "ontem", troubles: "problemas", seemed: "pareciam", far: "longe", away: "distante" } },
       { line: "Now it looks as though they're here to stay", words: ["now", "looks", "though", "stay"], translations: { now: "agora", looks: "parece", though: "embora / como se", stay: "ficar" } },
@@ -20,7 +30,9 @@ module.exports = {
       { line: "Oh, I believe in yesterday", words: ["believe", "yesterday"], translations: { believe: "acreditar", yesterday: "ontem" } }
     ];
 
-    // Função para normalizar strings
+    // ======================
+    // FUNÇÃO DE NORMALIZAÇÃO
+    // ======================
     function normalize(str) {
       return str
         .toLowerCase()
@@ -30,7 +42,9 @@ module.exports = {
         .trim();
     }
 
-    // Inicializa progresso
+    // ======================
+    // INICIALIZA PROGRESSO
+    // ======================
     if (!client.progress) client.progress = {};
     if (!client.currentQuestion) client.currentQuestion = {};
 
@@ -50,13 +64,16 @@ module.exports = {
       index
     };
 
-    // Evita "The application did not respond"
+    // ======================
+    // ENVIA A MENSAGEM DO COMANDO
+    // ======================
     await interaction.deferReply({ ephemeral: true });
-    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word!`);
+    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda no canal específico)`);
 
-    // Listener de respostas no chat
-    const filter = (msg) => msg.author.id === userId;
-    const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
+    // ======================
+    // COLETOR DE MENSAGENS
+    // ======================
+    const collector = channel.createMessageCollector({ filter: msg => msg.author.id === userId, time: 60000 });
 
     collector.on("collect", async (msg) => {
       const question = client.currentQuestion[userId];
@@ -66,7 +83,7 @@ module.exports = {
       const hiddenWordNormalized = normalize(question.hiddenWord);
 
       if (userAnswer === hiddenWordNormalized) {
-        // Mostra tradução primeiro
+        // Mostra tradução
         await msg.reply(`✅ Correct! The word **${question.hiddenWord}** means **${question.translation}**`);
 
         setTimeout(async () => {
@@ -80,7 +97,7 @@ module.exports = {
 
           client.currentQuestion[userId] = null;
           collector.stop();
-        }, 1500); // pausa para ver tradução
+        }, 1500); // pausa para ver a tradução
       } else {
         // Mensagem de erro a cada tentativa errada
         await msg.reply("❌ Not quite right, try again!");
@@ -89,7 +106,7 @@ module.exports = {
 
     collector.on("end", (_, reason) => {
       if (reason === "time") {
-        interaction.followUp({ content: "⏰ Time's up! Use /yesterday to try again.", ephemeral: true });
+        interaction.followUp({ content: "⏰ Time's up! Use /yesterday para tentar novamente.", ephemeral: true });
         client.currentQuestion[userId] = null;
       }
     });
