@@ -11,12 +11,7 @@ module.exports = {
     // ======================
     const practiceChannelId = "1411043041677938822"; // Coloque o ID do canal onde o bot vai coletar mensagens
     const channel = client.channels.cache.get(practiceChannelId);
-    if (!channel) {
-      return interaction.reply({
-        content: "Canal de prática não encontrado! Por favor, configure o ID corretamente.",
-        ephemeral: true
-      });
-    }
+    if (!channel) return interaction.reply({ content: "Canal de prática não encontrado!", ephemeral: true });
 
     // ======================
     // LETRA DA MÚSICA
@@ -61,7 +56,7 @@ module.exports = {
 
     // Palavra aleatória
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
-    const maskedLine = verse.line.replace(new RegExp("\\b" + hiddenWord + "\\b", "i"), "____");
+    const maskedLine = verse.line.replace(new RegExp(hiddenWord, "i"), "____");
 
     client.currentQuestion[userId] = {
       hiddenWord,
@@ -73,7 +68,7 @@ module.exports = {
     // ENVIA A MENSAGEM DO COMANDO
     // ======================
     await interaction.deferReply({ ephemeral: true });
-    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda no canal de prática)`);
+    await interaction.editReply(`🎶 ${maskedLine}\n👉 Digite apenas a palavra que falta! (responda no canal específico). Exemplo: se for "yesterday", digite só isso.`);
 
     // ======================
     // COLETOR DE MENSAGENS
@@ -82,45 +77,38 @@ module.exports = {
 
     collector.on("collect", async (msg) => {
       const question = client.currentQuestion[userId];
-      if (!question) {
-        // Se a pergunta não existir mais, para o coletor
-        return collector.stop('no_question');
-      }
+      if (!question) return;
 
-      const userAnswer = normalize(msg.content);
+      const userAnswerNormalized = normalize(msg.content);
       const hiddenWordNormalized = normalize(question.hiddenWord);
 
-      if (userAnswer === hiddenWordNormalized) {
-        // Resposta correta
-        await msg.reply(`✅ Correct! The word **${question.hiddenWord}** means **${question.translation}**`);
-        // Para o coletor com a razão "correct"
-        collector.stop('correct');
-      } else {
-        // Resposta incorreta
-        await msg.reply("❌ Not quite right, try again!");
-      }
-    });
+      // Split em palavras e verifica se a palavra escondida está presente (mais flexível)
+      const userWords = userAnswerNormalized.split(/\s+/).filter(word => word.length > 0);
+      if (userWords.includes(hiddenWordNormalized)) {
+        // Mostra tradução
+        await msg.reply(`✅ Correto! A palavra **${question.hiddenWord}** significa **${question.translation}**`);
 
-    collector.on("end", async (collected, reason) => {
-      const userId = interaction.user.id;
-      
-      if (reason === "correct") {
-        const question = client.currentQuestion[userId];
-        if (question) {
-          // Avança para o próximo verso
+        setTimeout(async () => {
+          // Avança para próximo verso
           client.progress[userId] = question.index + 1;
 
           if (client.progress[userId] >= yesterdayLyrics.length) {
-            await channel.send(`🎶 ${interaction.user} **You've completed the song!** Let's start again from the beginning.`);
+            await msg.channel.send("🔄 Você chegou ao final da música. Reiniciando...");
             client.progress[userId] = 0;
           }
 
-          // Limpa a pergunta atual para evitar respostas duplicadas
           client.currentQuestion[userId] = null;
-        }
-      } else if (reason === "time") {
-        // Tempo esgotado
-        interaction.followUp({ content: "⏰ Time's up! Use `/yesterday` to try again.", ephemeral: true });
+          collector.stop();
+        }, 1500); // pausa para ver a tradução
+      } else {
+        // Mensagem de erro a cada tentativa errada
+        await msg.reply("❌ Não está certo, tente novamente!");
+      }
+    });
+
+    collector.on("end", (_, reason) => {
+      if (reason === "time") {
+        interaction.followUp({ content: "⏰ Tempo esgotado! Use /yesterday para tentar novamente.", ephemeral: true });
         client.currentQuestion[userId] = null;
       }
     });
