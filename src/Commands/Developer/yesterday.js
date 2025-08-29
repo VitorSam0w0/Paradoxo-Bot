@@ -42,7 +42,7 @@ module.exports = {
 
     await interaction.reply({
       content: `🎶 ${maskedLine}\nUse /responder para enviar sua resposta.`,
-      ephemeral: false
+      ephemeral: false // todos veem
     });
   },
 };

@@ -20,7 +20,7 @@ module.exports = {
     if (!client.currentQuestion || !client.currentQuestion[userId]) {
       return interaction.reply({
         content: "Você não iniciou nenhuma música ainda. Use o comando da música primeiro.",
-        ephemeral: true
+        ephemeral: false // todos veem
       });
     }
 
@@ -33,7 +33,7 @@ module.exports = {
     if (normalize(answer) === normalize(question.hiddenWord)) {
       await interaction.reply({
         content: `✅ Correto! A palavra **${question.hiddenWord}** significa **${question.translation}**`,
-        ephemeral: false
+        ephemeral: false // todos veem
       });
 
       client.progress[userId] = question.index + 1;
@@ -46,7 +46,7 @@ module.exports = {
     } else {
       await interaction.reply({
         content: "❌ Errado! Tente novamente com /responder.",
-        ephemeral: true
+        ephemeral: false // agora todos veem o erro
       });
     }
   },
