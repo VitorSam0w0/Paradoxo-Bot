@@ -9,7 +9,7 @@ module.exports = {
     // ======================
     // CONFIGURAÇÃO DO CANAL
     // ======================
-    const practiceChannelId = "ID_DO_CANAL_AQUI"; // Coloque o ID do canal onde o bot vai coletar mensagens
+    const practiceChannelId = "1411043041677938822"; // Coloque o ID do canal onde o bot vai coletar mensagens
     const channel = client.channels.cache.get(practiceChannelId);
     if (!channel) {
       return interaction.reply({
