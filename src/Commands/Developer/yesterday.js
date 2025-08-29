@@ -11,7 +11,12 @@ module.exports = {
     // ======================
     const practiceChannelId = "ID_DO_CANAL_AQUI"; // Coloque o ID do canal onde o bot vai coletar mensagens
     const channel = client.channels.cache.get(practiceChannelId);
-    if (!channel) return interaction.reply({ content: "Canal de prática não encontrado!", ephemeral: true });
+    if (!channel) {
+      return interaction.reply({
+        content: "Canal de prática não encontrado! Por favor, configure o ID corretamente.",
+        ephemeral: true
+      });
+    }
 
     // ======================
     // LETRA DA MÚSICA
@@ -56,7 +61,7 @@ module.exports = {
 
     // Palavra aleatória
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
-    const maskedLine = verse.line.replace(new RegExp(hiddenWord, "i"), "____");
+    const maskedLine = verse.line.replace(new RegExp("\\b" + hiddenWord + "\\b", "i"), "____");
 
     client.currentQuestion[userId] = {
       hiddenWord,
@@ -68,7 +73,7 @@ module.exports = {
     // ENVIA A MENSAGEM DO COMANDO
     // ======================
     await interaction.deferReply({ ephemeral: true });
-    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda no canal específico)`);
+    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda no canal de prática)`);
 
     // ======================
     // COLETOR DE MENSAGENS
@@ -77,36 +82,45 @@ module.exports = {
 
     collector.on("collect", async (msg) => {
       const question = client.currentQuestion[userId];
-      if (!question) return;
+      if (!question) {
+        // Se a pergunta não existir mais, para o coletor
+        return collector.stop('no_question');
+      }
 
       const userAnswer = normalize(msg.content);
       const hiddenWordNormalized = normalize(question.hiddenWord);
 
       if (userAnswer === hiddenWordNormalized) {
-        // Mostra tradução
+        // Resposta correta
         await msg.reply(`✅ Correct! The word **${question.hiddenWord}** means **${question.translation}**`);
-
-        setTimeout(async () => {
-          // Avança para próximo verso
-          client.progress[userId] = question.index + 1;
-
-          if (client.progress[userId] >= yesterdayLyrics.length) {
-            await msg.channel.send("🔄 You've reached the end of the song. Starting again...");
-            client.progress[userId] = 0;
-          }
-
-          client.currentQuestion[userId] = null;
-          collector.stop();
-        }, 1500); // pausa para ver a tradução
+        // Para o coletor com a razão "correct"
+        collector.stop('correct');
       } else {
-        // Mensagem de erro a cada tentativa errada
+        // Resposta incorreta
         await msg.reply("❌ Not quite right, try again!");
       }
     });
 
-    collector.on("end", (_, reason) => {
-      if (reason === "time") {
-        interaction.followUp({ content: "⏰ Time's up! Use /yesterday para tentar novamente.", ephemeral: true });
+    collector.on("end", async (collected, reason) => {
+      const userId = interaction.user.id;
+      
+      if (reason === "correct") {
+        const question = client.currentQuestion[userId];
+        if (question) {
+          // Avança para o próximo verso
+          client.progress[userId] = question.index + 1;
+
+          if (client.progress[userId] >= yesterdayLyrics.length) {
+            await channel.send(`🎶 ${interaction.user} **You've completed the song!** Let's start again from the beginning.`);
+            client.progress[userId] = 0;
+          }
+
+          // Limpa a pergunta atual para evitar respostas duplicadas
+          client.currentQuestion[userId] = null;
+        }
+      } else if (reason === "time") {
+        // Tempo esgotado
+        interaction.followUp({ content: "⏰ Time's up! Use `/yesterday` to try again.", ephemeral: true });
         client.currentQuestion[userId] = null;
       }
     });
