@@ -1,6 +1,3 @@
-// Acessa as variáveis de ambiente usando process.env
-const { YESTERDAY_PRACTICE_CHANNEL_ID } = process.env;
-
 module.exports = {
   data: {
     name: "yesterday",
@@ -9,19 +6,7 @@ module.exports = {
     dm_permissions: "0",
   },
   async execute(interaction, client) {
-    // ======================
-    // CONFIGURAÇÃO DO CANAL
-    // ======================
-    const practiceChannelId = YESTERDAY_PRACTICE_CHANNEL_ID;
-    const channel = await client.channels.fetch(practiceChannelId).catch(() => null);
-
-    if (!channel) {
-      return interaction.reply({
-        content:
-          "Canal de prática não encontrado! Configure o ID corretamente no arquivo .env e verifique permissões do bot.",
-        ephemeral: true,
-      });
-    }
+    const channel = interaction.channel; // usa o mesmo canal do comando
 
     // ======================
     // LETRA DA MÚSICA
@@ -78,7 +63,7 @@ module.exports = {
     // ENVIA A MENSAGEM DO COMANDO
     // ======================
     await interaction.deferReply({ ephemeral: true });
-    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda no canal de prática)`);
+    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word! (responda aqui mesmo)`);
 
     // ======================
     // COLETOR DE MENSAGENS
