@@ -20,7 +20,17 @@ module.exports = {
       { line: "Oh, I believe in yesterday", words: ["believe", "yesterday"], translations: { believe: "acreditar", yesterday: "ontem" } }
     ];
 
-    // inicializa progresso
+    // Função para normalizar strings
+    function normalize(str) {
+      return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s]/gi, "")
+        .trim();
+    }
+
+    // Inicializa progresso
     if (!client.progress) client.progress = {};
     if (!client.currentQuestion) client.currentQuestion = {};
 
@@ -30,7 +40,7 @@ module.exports = {
     const index = client.progress[userId];
     const verse = yesterdayLyrics[index];
 
-    // palavra aleatória
+    // Palavra aleatória
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
     const maskedLine = verse.line.replace(new RegExp(hiddenWord, "i"), "____");
 
@@ -40,7 +50,7 @@ module.exports = {
       index
     };
 
-    // evita "The application did not respond"
+    // Evita "The application did not respond"
     await interaction.deferReply({ ephemeral: true });
     await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word!`);
 
@@ -52,14 +62,15 @@ module.exports = {
       const question = client.currentQuestion[userId];
       if (!question) return;
 
-      const regex = new RegExp(`\\b${question.hiddenWord}\\b`, "i");
-      if (regex.test(msg.content)) {
-        // mostra tradução primeiro
+      const userAnswer = normalize(msg.content);
+      const hiddenWordNormalized = normalize(question.hiddenWord);
+
+      if (userAnswer === hiddenWordNormalized) {
+        // Mostra tradução primeiro
         await msg.reply(`✅ Correct! The word **${question.hiddenWord}** means **${question.translation}**`);
 
-        // pequena pausa antes de continuar
         setTimeout(async () => {
-          // avança para próximo verso
+          // Avança para próximo verso
           client.progress[userId] = question.index + 1;
 
           if (client.progress[userId] >= yesterdayLyrics.length) {
@@ -68,10 +79,11 @@ module.exports = {
           }
 
           client.currentQuestion[userId] = null;
-          collector.stop(); // para o coletor para o usuário responder o próximo verso
-        }, 1500); // 1,5s de pausa para o usuário ver a tradução
+          collector.stop();
+        }, 1500); // pausa para ver tradução
       } else {
-        msg.reply("❌ Not quite right, try again!");
+        // Mensagem de erro a cada tentativa errada
+        await msg.reply("❌ Not quite right, try again!");
       }
     });
 
