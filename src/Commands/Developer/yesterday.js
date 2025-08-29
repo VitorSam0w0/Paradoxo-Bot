@@ -20,7 +20,7 @@ module.exports = {
       { line: "Oh, I believe in yesterday", words: ["believe", "yesterday"], translations: { believe: "acreditar", yesterday: "ontem" } }
     ];
 
-    // progresso por usuário
+    // inicializa progresso
     if (!client.progress) client.progress = {};
     if (!client.currentQuestion) client.currentQuestion = {};
 
@@ -30,7 +30,6 @@ module.exports = {
     const index = client.progress[userId];
     const verse = yesterdayLyrics[index];
 
-    // palavra aleatória
     const hiddenWord = verse.words[Math.floor(Math.random() * verse.words.length)];
     const maskedLine = verse.line.replace(new RegExp(hiddenWord, "i"), "____");
 
@@ -40,6 +39,8 @@ module.exports = {
       index
     };
 
-    await interaction.reply(`🎶 ${maskedLine}\n👉 Complete the missing word!`);
+    // ⚡ evita "The application did not respond"
+    await interaction.deferReply({ ephemeral: true });
+    await interaction.editReply(`🎶 ${maskedLine}\n👉 Complete the missing word!`);
   },
 };
