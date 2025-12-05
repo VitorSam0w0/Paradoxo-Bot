@@ -1,3 +1,6 @@
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+const path = require('path');
+
 module.exports = {
   data: {
     name: "let_it_be",
@@ -7,6 +10,16 @@ module.exports = {
   },
   async execute(interaction, client) {
     const userId = interaction.user.id;
+    const member = interaction.member;
+
+    // Verifica se o usuário está em um canal de voz
+    const voiceChannel = member.voice.channel;
+    if (!voiceChannel) {
+      return interaction.reply({
+        content: "❌ Você precisa estar em um canal de voz para usar este comando!",
+        ephemeral: true
+      });
+    }
 
     const letItBeLyrics = [
       {
@@ -83,7 +96,6 @@ module.exports = {
 
     if (!client.progress) client.progress = {};
     if (!client.currentQuestion) client.currentQuestion = {};
-
     if (!client.progress[userId]) client.progress[userId] = 0;
 
     const index = client.progress[userId];
@@ -99,9 +111,48 @@ module.exports = {
       index
     };
 
-    await interaction.reply({
-      content: `🎶 ${maskedLine}\nUse /responder para enviar sua resposta.`,
-      ephemeral: false // todos veem
-    });
+    try {
+      // Entra no canal de voz
+      const connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: interaction.guild.id,
+        adapterCreator: interaction.guild.voiceAdapterCreator,
+      });
+
+      // Cria o player de áudio
+      const player = createAudioPlayer();
+
+      // Caminho do arquivo de áudio
+      const audioPath = path.join(__dirname, '..', '..', 'audio', 'let_it_be.mp3');
+      const resource = createAudioResource(audioPath);
+
+      // Conecta o player à conexão de voz
+      connection.subscribe(player);
+
+      // Toca o áudio
+      player.play(resource);
+
+      await interaction.reply({
+        content: `🎶 Tocando **Let It Be** - The Beatles\n\n📝 Complete a frase: **${maskedLine}**\n\nUse \`/responder\` para enviar sua resposta.`,
+        ephemeral: false
+      });
+
+      // Evento quando a música terminar
+      player.on(AudioPlayerStatus.Idle, () => {
+        // connection.destroy(); // Descomente para sair após tocar
+      });
+
+      // Evento de erro
+      player.on('error', error => {
+        console.error('Erro no player:', error);
+      });
+
+    } catch (error) {
+      console.error('Erro ao entrar no canal de voz:', error);
+      await interaction.reply({
+        content: "❌ Ocorreu um erro ao tentar entrar no canal de voz.",
+        ephemeral: true
+      });
+    }
   },
 };
